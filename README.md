@@ -8,8 +8,6 @@ CourseBrain is a Chrome-based course assistant. It indexes materials from a stud
 
 The current integration is [Brightspace](https://brightspace.usc.edu). A student opens the side panel on a course page, syncs the current course, then asks questions such as “When is Homework 1 due?” or “Where is Newton's method explained?”
 
-This repository is a recruiting code sample. It is the real implementation, with private course data and experimental code removed.
-
 ## Problem
 
 Course information is spread across lecture files, module pages, the syllabus, assignments, and announcements. Finding one fact often means opening several Brightspace pages.
@@ -18,64 +16,45 @@ CourseBrain turns those materials into a searchable course knowledge layer: inge
 
 ## Architecture
 
-```
-Student (Brightspace)
-        │
-        ▼
-Chrome Extension
-  Side Panel  ──────── chat ──────────►  FastAPI  /api/v1/chat
-  Service Worker  ──── ingest ────────►  FastAPI  /api/v1/ingest/batch
-  Content Script  ── session cookie ──►  Brightspace LE API
-        │
-        ▼
-plan_query          intent + English search_queries
-        │
-        ├─ named assignment ──► assignment object  (due / submit / open)
-        │                       or scoped retrieval (instructions)
-        │
-        └─ else ──► planned_retrieval
-                      multi-query × intent-tier routing
-                      resource resolver (HW1 / Lab2 → topic)
-                      course-wide grade-policy filter
-        │
-        ▼
-Chroma collection  course_{uuid}     +  JSON assignment objects
-        │
-        ▼
-chat_with_rag       grounded answer + [SOURCE N]
-        │
-        ▼
-Extension opens the Brightspace source (PDF page or highlighted text)
+```mermaid
+flowchart TD
+  student[Student on Brightspace]
+  ext[Chrome Extension]
+  api[FastAPI]
+  plan[Query planning]
+  assign[Named assignment shortcut]
+  retrieve[Intent-aware multi-query retrieval]
+  store[(Course Chroma + JSON assignments)]
+  gen[Grounded generation]
+  out[Answer + source references]
+
+  student --> ext
+  ext -->|ingest / chat| api
+  api --> plan
+  plan --> assign
+  plan --> retrieve
+  assign --> store
+  retrieve --> store
+  store --> gen
+  assign -->|due / submit / open| out
+  gen --> out
+  out --> ext
 ```
 
-Storage is local ChromaDB plus JSON files under `api/data/`. Each course has its own collection. There is no conversation history: each `/chat` request is `course_id` + `message`.
+The extension syncs via `POST /api/v1/ingest/batch` and asks via `POST /api/v1/chat`. Due-date and submit-location questions can return from the assignment object without a chat completion. Other questions go through `planned_retrieval` on that course's Chroma collection, then `chat_with_rag`. Each chat request is `course_id` + `message`.
 
-## Key engineering
+Most of the backend lives in `api/app/services/`:
 
-- **Course-isolated collections** — ingest and retrieve against `course_{uuid}` only
-- **Ingest pipeline** — PDF/HTML parse, navigation-page filter, token chunks, document-type labels, embeddings
-- **Query planning** — LLM structured output: intent, question type, English retrieval queries
-- **Intent-aware routing** — syllabus / lecture / assignment tiers, with early-stop for course-info questions
-- **Multi-query retrieval** — parallel searches, merge by chunk, coverage-aware Top-K
-- **Resource resolution** — map `hw1` / `lab2` to a synced topic and optionally scope retrieval
-- **Assignment shortcut** — due date and submit-location answers come from the Brightspace assignment object, not the LLM
-- **Grade-policy filter** — course-wide grade weights are not answered from a project rubric
-- **Grounded generation** — context has no URLs; the model cites `[SOURCE N]`; the API attaches links
-- **Chrome extension** — Brightspace discovery, sync progress, citation open/highlight
+- [`retrieval_router.py`](api/app/services/retrieval_router.py) — intent tiers, multi-query merge, and scoped retrieval when the question names something like HW1
+- [`rag.py`](api/app/services/rag.py) — `chat_with_rag`: assignment lookup, retrieval, prompt, `[SOURCE N]` citations
+- [`query_intent.py`](api/app/services/query_intent.py) — turns a question into an intent and English search queries
+- [`brightspace-indexer.ts`](extension/src/content/brightspace-indexer.ts) — discovers Brightspace modules, files, and assignments for ingest
 
-## If you only have five minutes, start here
-
-| File | Why |
-| --- | --- |
-| [`api/app/services/retrieval_router.py`](api/app/services/retrieval_router.py) | The retrieval design: intent tiers, early-stop, multi-query merge, identifier boost, scoped resource slots |
-| [`api/app/services/rag.py`](api/app/services/rag.py) (`chat_with_rag`) | End-to-end answer path: planner, assignment shortcut, policy filter, prompt, citation parse |
-| [`api/app/services/query_intent.py`](api/app/services/query_intent.py) | Structured query plan plus a deterministic override for course-wide grading questions |
-| [`extension/src/content/brightspace-indexer.ts`](extension/src/content/brightspace-indexer.ts) | Real LMS ingest: module tree + TOC coverage, fetch fallbacks, assignment pipeline |
-| [`api/tests/test_retrieval_router.py`](api/tests/test_retrieval_router.py) and [`api/tests/test_grade_policy.py`](api/tests/test_grade_policy.py) | How routing and grade-scope bugs were locked down |
+Due dates come from the assignment object when possible. Course-wide grading questions stay on syllabus-style sources, not project rubrics — see [`test_retrieval_router.py`](api/tests/test_retrieval_router.py) and [`test_grade_policy.py`](api/tests/test_grade_policy.py).
 
 ## Example query flow
 
-All names below are fictional (`sample_data/intro-numerical-methods`).
+Using [`sample_data/intro-numerical-methods`](sample_data/intro-numerical-methods):
 
 **“Where is Newton's method explained?”**
 
@@ -93,11 +72,11 @@ All names below are fictional (`sample_data/intro-numerical-methods`).
 
 ## Tech stack
 
-| Layer | Used here |
+| Layer | |
 | --- | --- |
 | Extension | Chrome Manifest V3, React, TypeScript, Vite, esbuild |
 | API | FastAPI, Pydantic, Uvicorn |
-| Retrieval / generation | OpenAI embeddings + chat, custom router (not LangChain) |
+| Retrieval / generation | OpenAI embeddings + chat, custom retrieval router |
 | Storage | ChromaDB (local persistent client), JSON course registry and assignment objects |
 | Tests | Python `unittest`, Vitest |
 
@@ -160,5 +139,5 @@ cd extension && npm test
 ```
 api/           FastAPI app, retrieval, ingest, tests
 extension/     Chrome MV3 side panel, indexer, highlighter
-sample_data/   Fictional ingest payload
+sample_data/   Example ingest payload
 ```
