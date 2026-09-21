@@ -1,0 +1,49 @@
+{
+  "external_id": "1001",
+  "name": "NUM-201 Introduction to Numerical Methods",
+  "platform": "brightspace",
+  "topics": [
+    {
+      "external_id": "syllabus-1",
+      "module_name": "Syllabus",
+      "title": "NUM-201 course syllabus",
+      "url": "https://lms.example.edu/courses/num-201/syllabus",
+      "file_type": "html",
+      "content": "<h1>NUM-201 Introduction to Numerical Methods</h1><h2>Grading</h2><p>Homework: 80 points of the total course grade. Project: 150 points of the total course grade. Exams: 170 points of the total course grade.</p><p>Office hours: Tuesday 2:00–3:00 PM in Hall 12.</p>"
+    },
+    {
+      "external_id": "lecture-03",
+      "module_name": "Week 3",
+      "title": "Lecture 3 — Root finding",
+      "url": "https://lms.example.edu/courses/num-201/lecture-03",
+      "file_type": "html",
+      "content": "<h1>Root-finding methods</h1><p>Newton's method finds a root of f(x) = 0 by iterating x_{n+1} = x_n - f(x_n)/f'(x_n) from an initial guess x_0.</p><p>The method converges quadratically when f'(x*) is nonzero and the starting point is close enough to the root.</p><p>A common failure case is a poor initial guess, or a point where the derivative is near zero.</p>"
+    },
+    {
+      "external_id": "lecture-04",
+      "module_name": "Week 4",
+      "title": "Lecture 4 — Linear systems",
+      "url": "https://lms.example.edu/courses/num-201/lecture-04",
+      "file_type": "html",
+      "content": "<h1>Solving linear systems</h1><p>Gaussian elimination with partial pivoting factors A into PA = LU.</p><p>Once the factorization is known, solve Ly = Pb and Ux = y.</p>"
+    },
+    {
+      "external_id": "announcement-1",
+      "module_name": "Announcements",
+      "title": "Week 3 reading",
+      "url": "https://lms.example.edu/courses/num-201/announcements/1",
+      "file_type": "html",
+      "content": "<p>Please read the root-finding chapter before Thursday. Homework 1 is posted in Assignments.</p>"
+    }
+  ],
+  "assignments": [
+    {
+      "object_id": "9001",
+      "name": "Homework 1",
+      "canonical_url": "https://lms.example.edu/courses/num-201/assignments/hw1",
+      "due_at": "2026-10-03T06:59:00.000Z",
+      "submission_type": "File",
+      "instructions": "Implement Newton's method for a scalar equation and report the iterate table for f(x) = x^3 - 2. Submit a short PDF write-up."
+    }
+  ]
+}

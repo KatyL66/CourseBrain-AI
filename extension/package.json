@@ -1,0 +1,27 @@
+{
+  "name": "coursebrain-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build -- --watch",
+    "build": "vite build && npm run build:content",
+    "build:content": "esbuild src/content/brightspace-indexer.ts --bundle --format=iife --outfile=dist/content/brightspace-indexer.js && esbuild src/content/brightspace-highlighter.ts --bundle --format=iife --outfile=dist/content/brightspace-highlighter.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vitest": "^3.2.4"
+  }
+}

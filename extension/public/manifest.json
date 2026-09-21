@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "CourseBrain",
+  "version": "0.1.0",
+  "description": "Index Brightspace course materials and ask grounded questions with source links",
+  "permissions": ["sidePanel", "storage", "tabs", "scripting", "activeTab"],
+  "host_permissions": [
+    "https://brightspace.usc.edu/*",
+    "http://localhost:8001/*",
+    "http://127.0.0.1:8001/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "CourseBrain"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://brightspace.usc.edu/*"],
+      "js": ["content/brightspace-indexer.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

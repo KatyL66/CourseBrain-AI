@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Local course vectors / objects — never commit
+api/data/
+/data/
+
+# Packaged extension
+*.zip
+
+# Secrets
+*.pem
+.env.local
+.env.staging
+.env.staging.local

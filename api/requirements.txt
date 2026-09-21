@@ -1,0 +1,9 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic-settings>=2.6.0
+openai>=1.57.0
+pymupdf>=1.24.0
+python-multipart>=0.0.12
+httpx>=0.28.0
+chromadb>=0.5.0
+tiktoken>=0.9.0
