@@ -1,143 +1,31 @@
 # CourseBrain
 
-<p align="center">
-  <img src="docs/banner.svg" alt="CourseBrain" width="100%">
-</p>
+USC Brightspace 课程助手的 Private Beta 安装包。下载后在 Chrome 里加载，输入邀请码即可使用。不需要填写 OpenAI API Key。
 
-CourseBrain is a Chrome-based course assistant. It indexes materials from a student's LMS, stores them in a course-specific vector collection, and answers questions from those materials with source references.
+## 下载
 
-The current integration is [Brightspace](https://brightspace.usc.edu). A student opens the side panel on a course page, syncs the current course, then asks questions such as “When is Homework 1 due?” or “Where is Newton's method explained?”
+[coursebrain-extension-beta.zip](https://github.com/KatyL66/CourseBrain-AI/raw/main/coursebrain-extension-beta.zip)
 
-## Problem
+## 安装
 
-Course information is spread across lecture files, module pages, the syllabus, assignments, and announcements. Finding one fact often means opening several Brightspace pages.
+Chrome 不能直接安装 ZIP。
 
-CourseBrain turns those materials into a searchable course knowledge layer: ingest once, then ask in natural language and jump back to the source.
+1. 下载上面的 ZIP 并解压。
+2. 打开解压出来的文件夹，确认根目录里能直接看到 `manifest.json`。如果里面又套了一层文件夹，进入那一层，直到看到 `manifest.json`。
+3. 打开 Chrome，在地址栏输入 `chrome://extensions`。
+4. 打开右上角的「开发者模式」。
+5. 点击「加载已解压的扩展程序」，选择含有 `manifest.json` 的那个文件夹。
 
-## Architecture
+## 使用
 
-```mermaid
-flowchart TD
-  student[Student on Brightspace]
-  ext[Chrome Extension]
-  api[FastAPI]
-  plan[Query planning]
-  assign[Named assignment shortcut]
-  retrieve[Intent-aware multi-query retrieval]
-  store[(Course Chroma + JSON assignments)]
-  gen[Grounded generation]
-  out[Answer + source references]
+1. 登录 [Brightspace](https://brightspace.usc.edu)，打开一门课。
+2. 点击地址栏右侧的拼图图标，再点击 CourseBrain。侧边栏会打开。需要的话可以把它固定在工具栏上。
+3. 第一次使用时输入邀请码，点击「保存邀请码」。邀请码只保存在这台浏览器里。请向 CourseBrain 的维护者索取邀请码。
+4. 在课程页面点击「同步当前 Brightspace 课程」。
+5. 同步完成后直接提问。点击答案里的出处，会打开对应材料。
 
-  student --> ext
-  ext -->|ingest / chat| api
-  api --> plan
-  plan --> assign
-  plan --> retrieve
-  assign --> store
-  retrieve --> store
-  store --> gen
-  assign -->|due / submit / open| out
-  gen --> out
-  out --> ext
-```
+## 说明
 
-The extension syncs via `POST /api/v1/ingest/batch` and asks via `POST /api/v1/chat`. Due-date and submit-location questions can return from the assignment object without a chat completion. Other questions go through `planned_retrieval` on that course's Chroma collection, then `chat_with_rag`. Each chat request is `course_id` + `message`.
-
-Most of the backend lives in `api/app/services/`:
-
-- [`retrieval_router.py`](api/app/services/retrieval_router.py) — intent tiers, multi-query merge, and scoped retrieval when the question names something like HW1
-- [`rag.py`](api/app/services/rag.py) — `chat_with_rag`: assignment lookup, retrieval, prompt, `[SOURCE N]` citations
-- [`query_intent.py`](api/app/services/query_intent.py) — turns a question into an intent and English search queries
-- [`brightspace-indexer.ts`](extension/src/content/brightspace-indexer.ts) — discovers Brightspace modules, files, and assignments for ingest
-
-Due dates come from the assignment object when possible. Course-wide grading questions stay on syllabus-style sources, not project rubrics — see [`test_retrieval_router.py`](api/tests/test_retrieval_router.py) and [`test_grade_policy.py`](api/tests/test_grade_policy.py).
-
-## Example query flow
-
-Using [`sample_data/intro-numerical-methods`](sample_data/intro-numerical-methods):
-
-**“Where is Newton's method explained?”**
-
-1. `plan_query` labels the question `LEARNING` and emits search queries such as `Newton's method explanation`
-2. `planned_retrieval` searches the NUM-201 collection, lecture-first
-3. Matching lecture chunks become `[SOURCE N]` context (no URLs in the prompt)
-4. The model answers from those chunks; the API returns source links
-5. The extension can open the lecture page and jump to the cited page
-
-**“When is Homework 1 due?”**
-
-1. Identifier matching resolves `Homework 1` to a synced assignment object
-2. The aspect is `due`, so the API returns the structured due date
-3. No chat completion is required for that answer
-
-## Tech stack
-
-| Layer | |
-| --- | --- |
-| Extension | Chrome Manifest V3, React, TypeScript, Vite, esbuild |
-| API | FastAPI, Pydantic, Uvicorn |
-| Retrieval / generation | OpenAI embeddings + chat, custom retrieval router |
-| Storage | ChromaDB (local persistent client), JSON course registry and assignment objects |
-| Tests | Python `unittest`, Vitest |
-
-## Running locally
-
-The backend and the sample-data path run without Brightspace. Full course sync needs an authenticated Brightspace session in Chrome.
-
-### 1. API
-
-```bash
-cd api
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # set OPENAI_API_KEY
-uvicorn app.main:app --reload --port 8001
-```
-
-OpenAPI: http://localhost:8001/docs
-
-### 2. Ingest the sample course
-
-```bash
-curl -s http://localhost:8001/api/v1/ingest/batch \
-  -H "Content-Type: application/json" \
-  -d @../sample_data/intro-numerical-methods/ingest_batch.json
-```
-
-Note the returned `course_id`, then:
-
-```bash
-curl -s http://localhost:8001/api/v1/chat \
-  -H "Content-Type: application/json" \
-  -d '{"course_id":"<course_id>","message":"Where is Newton'\''s method explained?"}'
-```
-
-Without `OPENAI_API_KEY`, ingest cannot embed. Chat can still return a retrieval excerpt or an assignment-object answer.
-
-### 3. Extension (optional)
-
-```bash
-cd extension
-npm install
-npm run build
-```
-
-Chrome → `chrome://extensions` → Load unpacked → `extension/dist/`
-
-Then open a Brightspace course page, sync, and ask from the side panel.
-
-### Tests
-
-```bash
-cd api && python -m unittest discover -s tests -v
-cd extension && npm test
-```
-
-## Layout
-
-```
-api/           FastAPI app, retrieval, ingest, tests
-extension/     Chrome MV3 side panel, indexer, highlighter
-sample_data/   Example ingest payload
-```
+- 只在 `https://brightspace.usc.edu` 上使用。
+- 不需要、也不要填写 OpenAI Key。
+- 每个邀请码每天的提问次数和同步次数有上限。
