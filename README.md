@@ -1,5 +1,37 @@
 # CourseBrain
 
+Private beta of a USC Brightspace course assistant. Download it, load it in Chrome, and enter an invite code. You do not need an OpenAI API key.
+
+## Download
+
+[coursebrain-extension-beta.zip](https://github.com/KatyL66/CourseBrain-AI/raw/main/coursebrain-extension-beta.zip)
+
+## Install
+
+Chrome cannot install a ZIP directly.
+
+1. Download the ZIP above and unzip it.
+2. Open the unzipped folder and confirm that `manifest.json` is in that folder. If the folder contains another folder, open that inner folder until you see `manifest.json`.
+3. Open Chrome and go to `chrome://extensions`.
+4. Turn on **Developer mode** in the top-right corner.
+5. Click **Load unpacked** and select the folder that contains `manifest.json`.
+
+## Use
+
+1. Sign in to [Brightspace](https://brightspace.usc.edu) and open a course.
+2. Click the puzzle icon to the right of the address bar, then click CourseBrain. The side panel opens. You can pin it to the toolbar if you want.
+3. The first time you use it, enter your invite code and click **Save invite code**. The code stays in this browser. Ask the CourseBrain maintainer for a code.
+4. On the course page, click **Sync this Brightspace course**.
+5. After sync finishes, ask a question. Click a source in the answer to open that material.
+
+## Notes
+
+- Use it only on `https://brightspace.usc.edu`.
+- Do not enter an OpenAI key. One is not required.
+- Each invite code has a daily limit on questions and syncs.
+
+---
+
 USC Brightspace 课程助手的 Private Beta 安装包。下载后在 Chrome 里加载，输入邀请码即可使用。不需要填写 OpenAI API Key。
 
 ## 下载
