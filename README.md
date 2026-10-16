@@ -1,6 +1,6 @@
 # CourseBrain
 
-Private beta of Brightspace course assistant. Download it, load it in Chrome, and enter an invite code. You do not need an OpenAI API key.
+Private beta of Brightspace course assistant. Download it, load it in Chrome, and enter an invite code.
 
 ## Download
 
@@ -32,7 +32,7 @@ Chrome cannot install a ZIP directly.
 
 ---
 
-Brightspace 课程助手的 Private Beta 安装包。下载后在 Chrome 里加载，输入邀请码即可使用。不需要填写 OpenAI API Key。
+Brightspace 课程助手的 Private Beta 安装包。下载后在 Chrome 里加载，输入邀请码即可使用。
 
 ## 下载
 
